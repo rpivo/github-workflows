@@ -41,20 +41,20 @@ jobs:
           aws-region: us-east-1
 
       - name: terraform init
-        working-directory: terraform/${{ inputs.module }}
+        working-directory: terraform
         run: terraform init
 
       - name: terraform plan
         if: ${{ inputs.action == 'plan' }}
-        working-directory: terraform/${{ inputs.module }}
+        working-directory: terraform
         run: terraform plan
 
       - name: terraform apply
         if: ${{ inputs.action == 'apply' }}
-        working-directory: terraform/${{ inputs.module }}
+        working-directory: terraform
         run: terraform apply -auto-approve
 
       - name: terraform destroy
         if: ${{ inputs.action == 'destroy' }}
-        working-directory: terraform/${{ inputs.module }}
+        working-directory: terraform
         run: terraform destroy -auto-approve
