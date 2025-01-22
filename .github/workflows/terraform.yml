@@ -1,0 +1,60 @@
+name: terraform
+run-name: ${{ github.actor }} / terraform / ${{ inputs.action }} / ${{ inputs.module }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: action
+        options:
+          - plan
+          - apply
+          - destroy
+      module:
+        type: choice
+        description: action
+        options:
+          - { module 1 }
+          - { module 2 }
+          - { ... }
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/cicd-role
+          aws-region: us-east-1
+
+      - name: terraform init
+        working-directory: terraform/${{ inputs.module }}
+        run: terraform init
+
+      - name: terraform plan
+        if: ${{ inputs.action == 'plan' }}
+        working-directory: terraform/${{ inputs.module }}
+        run: terraform plan
+
+      - name: terraform apply
+        if: ${{ inputs.action == 'apply' }}
+        working-directory: terraform/${{ inputs.module }}
+        run: terraform apply -auto-approve
+
+      - name: terraform destroy
+        if: ${{ inputs.action == 'destroy' }}
+        working-directory: terraform/${{ inputs.module }}
+        run: terraform destroy -auto-approve
