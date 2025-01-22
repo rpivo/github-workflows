@@ -1,0 +1,49 @@
+name: cdk
+run-name: ${{ github.actor }} / cdk / ${{ inputs.action }} / ${{ inputs.stack }}
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: action
+        options:
+          - diff
+          - deploy
+          - destroy
+          - bootstrap
+      stack:
+        type: choice
+        description: stack
+        options:
+          - { stack 1 }
+          - { stack 2 }
+          - { ...etc }
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  cdk:
+    runs-on: ubuntu-latest
+    steps:
+        # optional if the stack requires this env var
+      - name: set env vars
+        run: echo "AWS_ACCOUNT=${{ secrets.AWS_ACCOUNT_ID }}" >> "$GITHUB_ENV"
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: install
+        run: npm ci
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/cicd-role
+          aws-region: us-east-1
+
+      - name: cdk
+        run: |
+          cd cdk
+          npx cdk ${{ inputs.action }} ${{ inputs.stack }} --require-approval never
